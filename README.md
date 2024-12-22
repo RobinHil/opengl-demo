@@ -1,2 +1,3 @@
-# opengl-demo
+# OpenGL Demo
+
 C++ OpenGL concepts demonstrator.
