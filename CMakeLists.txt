@@ -2,6 +2,11 @@
 cmake_minimum_required(VERSION 3.5)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# Définir la politique CMP0072 pour OpenGL
+if(POLICY CMP0072)
+    cmake_policy(SET CMP0072 NEW)
+endif()
+
 #CMAKE_BUILD_TYPE
 if( NOT CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Debug CACHE STRING
@@ -24,6 +29,7 @@ set(CMAKE_CXX_STANDARD "17")
 
 ## Lib dependency
 # OpenGL
+set(OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 
 if ( ${CMAKE_SYSTEM_NAME} MATCHES "Linux" )

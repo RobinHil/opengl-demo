@@ -210,7 +210,6 @@ int main()
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::ShowDemoWindow();
 
@@ -307,6 +306,8 @@ void onMouseMove(GLFWwindow* window, double xpos, double ypos)
         orbitalCamera.pedestal(yoffset);
         break;
       case MousePressedButton::MIDDLE: orbitalCamera.dolly(yoffset);
+        break;
+      case MousePressedButton::NONE:
         break;
     }
   }

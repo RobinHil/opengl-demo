@@ -6,21 +6,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/matrix_transform.hpp>
 
-//
-//                  |
-//                 YAW
-//                  |
-//     R         _  |
-//     O        _\_\|____/ )
-//   --L------(0        __/
-//     L        --\ \----
-//                 \ \
-//                   -
-//                    \
-//                    PITCH
-//                      \
-//
-
 namespace GLEngine {
 	class OrbitalCamera {
 	public:

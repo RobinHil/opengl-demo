@@ -20,18 +20,18 @@
  * blabla
  */
 namespace GLEngine {
-	static void GLClearError() {
-		while (glGetError() != GL_NO_ERROR);
-	}
+	// static void GLClearError() {
+	// 	while (glGetError() != GL_NO_ERROR);
+	// }
 
-	static bool GLLogCall(const char* function, const char* file, int line) {
-		while (GLenum error = glGetError()) {
-			std::cout << "[OpenGL Error] (" << error << ") " << function << std::endl
-				<< file <<" L" << line << std::endl;
-			return false;
-		}
-		return true;
-	}
+	// static bool GLLogCall(const char* function, const char* file, int line) {
+	// 	while (GLenum error = glGetError()) {
+	// 		std::cout << "[OpenGL Error] (" << error << ") " << function << std::endl
+	// 			<< file <<" L" << line << std::endl;
+	// 		return false;
+	// 	}
+	// 	return true;
+	// }
 } // namespace GLEngine
 
 #define ASSERT(x) if ((!x)) throw std::runtime_error("a gl error occured");

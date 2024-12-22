@@ -274,6 +274,8 @@ void onMouseMove(GLFWwindow* window, double xpos, double ypos)
         break;
       case MousePressedButton::MIDDLE: orbitalCamera.dolly(yoffset);
         break;
+      case MousePressedButton::NONE:
+        break;
     }
   }
 }
