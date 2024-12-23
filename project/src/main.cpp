@@ -15,6 +15,7 @@
 #include <glengine/orbitalCamera.hpp>
 #include <glengine/utils.hpp>
 #include <glengine/mesh.hpp>
+#include <glengine/grid3D.hpp>
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -107,6 +108,12 @@ int main() {
     
     GLEngine::Mesh currentMesh = GLEngine::loadMesh(currentObjPath);
 
+    // Initialize grid
+    std::string gridVertPath = std::string(_resources_directory).append("shader/grid.vert");
+    std::string gridFragPath = std::string(_resources_directory).append("shader/grid.frag");
+    GLEngine::Shader gridShader(gridVertPath.c_str(), gridFragPath.c_str());
+    GLEngine::Grid3D grid(1.0f, 0.2f);
+
     // ImGui variables
     static float lightPos[3] = {3.0f, 1.0f, 3.0f};
     static float objectColor[3] = {0.8f, 0.8f, 0.8f};
@@ -117,6 +124,7 @@ int main() {
     static bool usePhongLighting = true;
     static float backgroundColor[3] = {0.2f, 0.3f, 0.3f};
     static bool showWireframe = false;
+    static bool showGrid = true;
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
@@ -147,6 +155,14 @@ int main() {
         shader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
         shader.setFloat("shininess", shininess);
 
+        if (showGrid) {
+            gridShader.use();
+            gridShader.setMat4("view", view);
+            gridShader.setMat4("projection", projection);
+            gridShader.setMat4("model", glm::mat4(1.0f));
+            grid.draw(view, projection);
+        }
+
         glBindVertexArray(currentMesh.VAO);
         
         if (usePhongLighting) {
@@ -175,8 +191,8 @@ int main() {
         glfwGetWindowSize(window, &width, &height);
         
         // Configure ImGui window with current size
-        ImGui::SetNextWindowPos(ImVec2(width * 0.8f, 0), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(width * 0.2f, height), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(width * 0.75f, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(width * 0.25f, height), ImGuiCond_Always);
         
         // Start the window with flags to make it fixed
         ImGui::Begin("Rendering Parameters", nullptr, 
@@ -186,11 +202,12 @@ int main() {
             ImGuiWindowFlags_NoBringToFrontOnFocus
         );
 
-        // Camera position
         glm::vec3 camPos = orbitalCamera.getPosition();
-        ImGui::Text("Camera: (%.2f, %.2f, %.2f)", camPos.x, camPos.y, camPos.z);
+        ImGui::Text("Camera position: (%.2f, %.2f, %.2f)", camPos.x, camPos.y, camPos.z);
+
         ImGui::ColorEdit3("Background Color", backgroundColor);
-        ImGui::Separator();
+
+        ImGui::Checkbox("Show Grid", &showGrid);
         
         if (ImGui::CollapsingHeader("Light")) {
             ImGui::Checkbox("Phong Lighting", &usePhongLighting);
@@ -232,6 +249,7 @@ int main() {
 
     // Cleanup
     GLEngine::cleanupMesh(currentMesh);
+    grid.cleanup();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

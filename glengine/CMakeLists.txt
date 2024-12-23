@@ -18,6 +18,7 @@ set(SRC
   ${SRC_DIR}/shader.cpp
   ${SRC_DIR}/utils.cpp
   ${SRC_DIR}/mesh.cpp
+  ${SRC_DIR}/grid3D.cpp
 )
 
 set(HEADER
@@ -28,6 +29,7 @@ set(HEADER
   ${INC_DIR}/${PROJECT_NAME}/shader.hpp
   ${INC_DIR}/${PROJECT_NAME}/utils.hpp
   ${INC_DIR}/${PROJECT_NAME}/mesh.hpp
+  ${INC_DIR}/${PROJECT_NAME}/grid3D.hpp
 )
 
 add_library(${PROJECT_NAME} ${SRC} ${HEADER})
