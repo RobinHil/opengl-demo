@@ -101,12 +101,12 @@ int main() {
 
     // Load 3D model
     std::string objectsDir = std::string(_resources_directory).append("object/");
-    std::vector<std::string> objFiles = GLEngine::getObjFiles(objectsDir);
+    std::vector<std::string> objFiles = GLEngine::Mesh::getObjFiles(objectsDir);
     
     static int currentItem = 0;
     std::string currentObjPath = objectsDir + objFiles[currentItem];
-    
-    GLEngine::Mesh currentMesh = GLEngine::loadMesh(currentObjPath);
+    GLEngine::Mesh currentMesh;
+    currentMesh.loadFromFile(currentObjPath);
 
     // Initialize grid
     std::string gridVertPath = std::string(_resources_directory).append("shader/grid.vert");
@@ -162,8 +162,6 @@ int main() {
             gridShader.setMat4("model", glm::mat4(1.0f));
             grid.draw(view, projection);
         }
-
-        glBindVertexArray(currentMesh.VAO);
         
         if (usePhongLighting) {
             shader.use();
@@ -184,7 +182,7 @@ int main() {
 
         // Dessiner le modèle
         glPolygonMode(GL_FRONT_AND_BACK, showWireframe ? GL_LINE : GL_FILL);
-        glDrawElements(GL_TRIANGLES, currentMesh.indexCount, GL_UNSIGNED_INT, 0);
+        currentMesh.draw();
 
         // Get current window size
         int width, height;
@@ -229,8 +227,7 @@ int main() {
             {
                 std::string newObjPath = objectsDir + objFiles[currentItem];
                 if (newObjPath != currentObjPath) {
-                    cleanupMesh(currentMesh);
-                    currentMesh = GLEngine::loadMesh(newObjPath);
+                    currentMesh.loadFromFile(newObjPath);
                     currentObjPath = newObjPath;
                 }
             }
@@ -248,7 +245,7 @@ int main() {
     }
 
     // Cleanup
-    GLEngine::cleanupMesh(currentMesh);
+    currentMesh.cleanup();
     grid.cleanup();
 
     ImGui_ImplOpenGL3_Shutdown();
