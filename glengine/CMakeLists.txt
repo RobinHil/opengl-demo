@@ -15,6 +15,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/include BEFORE)
 set(SRC
   ${SRC_DIR}/orbitalCamera.cpp
   ${SRC_DIR}/glengine.cpp
+  ${SRC_DIR}/shader.cpp
+  ${SRC_DIR}/utils.cpp
 )
 
 set(HEADER
@@ -22,6 +24,8 @@ set(HEADER
   ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/config.hpp.in
   ${INC_DIR}/${PROJECT_NAME}/orbitalCamera.hpp
   ${INC_DIR}/${PROJECT_NAME}/glengine.hpp
+  ${INC_DIR}/${PROJECT_NAME}/shader.hpp
+  ${INC_DIR}/${PROJECT_NAME}/utils.hpp
 )
 
 add_library(${PROJECT_NAME} ${SRC} ${HEADER})
