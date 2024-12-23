@@ -16,7 +16,7 @@
 
 #include "project/config.hpp"
 
-void framebuffer_size_callback(GLFWwindow*, int, int);
+void framebufferSizeCallback(GLFWwindow*, int, int);
 void processInput(GLFWwindow *);
 std::string readShaderFile(const char*);
 void onMouseButton(GLFWwindow*, int, int, int);
@@ -74,7 +74,7 @@ int main()
     return -1;
   }
   glfwMakeContextCurrent(window);
-  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+  glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
   glfwSetMouseButtonCallback(window, onMouseButton);
   glfwSetCursorPosCallback(window, onMouseMove);
   glfwSetScrollCallback(window, onMouseScroll);
@@ -238,7 +238,7 @@ void processInput(GLFWwindow *window)
     glfwSetWindowShouldClose(window, true);
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
   glViewport(0, 0, width, height);
 }
