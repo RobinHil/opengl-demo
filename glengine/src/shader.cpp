@@ -13,19 +13,16 @@ namespace GLEngine {
 
         unsigned int vertex, fragment;
         
-        // vertex shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");
         
-        // fragment Shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fShaderCode, NULL);
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
         
-        // shader program
         id = glCreateProgram();
         glAttachShader(id, vertex);
         glAttachShader(id, fragment);
@@ -33,6 +30,44 @@ namespace GLEngine {
         checkCompileErrors(id, "PROGRAM");
 
         glDeleteShader(vertex);
+        glDeleteShader(fragment);
+    }
+
+    Shader::Shader(const char* vertexPath, const char* geometryPath, const char* fragmentPath) {
+        std::string vertexCode = readFile(vertexPath);
+        std::string geometryCode = readFile(geometryPath);
+        std::string fragmentCode = readFile(fragmentPath);
+
+        const char* vShaderCode = vertexCode.c_str();
+        const char* gShaderCode = geometryCode.c_str();
+        const char* fShaderCode = fragmentCode.c_str();
+
+        unsigned int vertex, geometry, fragment;
+        
+        vertex = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertex, 1, &vShaderCode, NULL);
+        glCompileShader(vertex);
+        checkCompileErrors(vertex, "VERTEX");
+        
+        geometry = glCreateShader(GL_GEOMETRY_SHADER);
+        glShaderSource(geometry, 1, &gShaderCode, NULL);
+        glCompileShader(geometry);
+        checkCompileErrors(geometry, "GEOMETRY");
+        
+        fragment = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragment, 1, &fShaderCode, NULL);
+        glCompileShader(fragment);
+        checkCompileErrors(fragment, "FRAGMENT");
+        
+        id = glCreateProgram();
+        glAttachShader(id, vertex);
+        glAttachShader(id, geometry);
+        glAttachShader(id, fragment);
+        glLinkProgram(id);
+        checkCompileErrors(id, "PROGRAM");
+
+        glDeleteShader(vertex);
+        glDeleteShader(geometry);
         glDeleteShader(fragment);
     }
 

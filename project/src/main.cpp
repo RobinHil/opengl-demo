@@ -95,9 +95,18 @@ int main() {
     ImGui_ImplOpenGL3_Init();
 
     // Load and compile shaders
-    std::string vertexPath = std::string(_resources_directory).append("shader/phong.vert");
-    std::string fragmentPath = std::string(_resources_directory).append("shader/phong.frag");
+    std::string vertexPath = std::string(_resources_directory).append("shader/light/phong/phong.vert");
+    std::string fragmentPath = std::string(_resources_directory).append("shader/light/phong/phong.frag");
     GLEngine::Shader shader(vertexPath.c_str(), fragmentPath.c_str());
+
+    std::string gridVertPath = std::string(_resources_directory).append("shader/grid/grid.vert");
+    std::string gridFragPath = std::string(_resources_directory).append("shader/grid/grid.frag");
+    GLEngine::Shader gridShader(gridVertPath.c_str(), gridFragPath.c_str());
+
+    std::string normalVertPath = std::string(_resources_directory).append("shader/normal/normal.vert");
+    std::string normalGeomPath = std::string(_resources_directory).append("shader/normal/normal.geom");
+    std::string normalFragPath = std::string(_resources_directory).append("shader/normal/normal.frag");
+    GLEngine::Shader normalShader(normalVertPath.c_str(), normalGeomPath.c_str(), normalFragPath.c_str());
 
     // Load 3D model
     std::string objectsDir = std::string(_resources_directory).append("object/");
@@ -109,9 +118,6 @@ int main() {
     currentMesh.loadFromFile(currentObjPath);
 
     // Initialize grid
-    std::string gridVertPath = std::string(_resources_directory).append("shader/grid.vert");
-    std::string gridFragPath = std::string(_resources_directory).append("shader/grid.frag");
-    GLEngine::Shader gridShader(gridVertPath.c_str(), gridFragPath.c_str());
     GLEngine::Grid3D grid(1.0f, 0.2f);
 
     // ImGui variables
@@ -125,6 +131,8 @@ int main() {
     static float backgroundColor[3] = {0.2f, 0.3f, 0.3f};
     static bool showWireframe = false;
     static bool showGrid = true;
+    static bool showNormals = false;
+    static float normalLength = 0.1f;
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
@@ -184,6 +192,15 @@ int main() {
         glPolygonMode(GL_FRONT_AND_BACK, showWireframe ? GL_LINE : GL_FILL);
         currentMesh.draw();
 
+        if (showNormals) {
+            normalShader.use();
+            normalShader.setMat4("model", model);
+            normalShader.setMat4("view", view);
+            normalShader.setMat4("projection", projection);
+            normalShader.setFloat("normalLength", normalLength);
+            currentMesh.draw();
+        }
+
         // Get current window size
         int width, height;
         glfwGetWindowSize(window, &width, &height);
@@ -234,6 +251,7 @@ int main() {
             ImGui::Checkbox("Show Wireframe", &showWireframe);
             ImGui::ColorEdit3("Object Color", objectColor);
             ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
+            ImGui::Checkbox("Show Normals", &showNormals);
         }
 
         ImGui::End();
