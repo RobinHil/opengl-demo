@@ -1,5 +1,7 @@
 {
     "files.associations": {
+        "*.ndjson": "jsonl",
+        "*.dbclient-js": "javascript",
         "*.embeddedhtml": "html",
         "cctype": "cpp",
         "clocale": "cpp",
@@ -78,6 +80,7 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "codecvt": "cpp"
     }
 }

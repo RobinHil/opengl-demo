@@ -14,6 +14,7 @@
 #include <glengine/shader.hpp>
 #include <glengine/orbitalCamera.hpp>
 #include <glengine/utils.hpp>
+#include <glengine/mesh.hpp>
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -98,37 +99,24 @@ int main() {
     GLEngine::Shader shader(vertexPath.c_str(), fragmentPath.c_str());
 
     // Load 3D model
-    std::string objectPath = std::string(_resources_directory).append("object/dragon2_smooth.obj");
-    std::vector<glm::vec3> vertices;
-    std::vector<unsigned int> indices;
-    GLEngine::loadObjFile(objectPath.c_str(), vertices, indices);
+    std::string objectsDir = std::string(_resources_directory).append("object/");
+    std::vector<std::string> objFiles = GLEngine::getObjFiles(objectsDir);
+    
+    static int currentItem = 0;
+    std::string currentObjPath = objectsDir + objFiles[currentItem];
+    
+    GLEngine::Mesh currentMesh = GLEngine::loadMesh(currentObjPath);
 
-    std::vector<glm::vec3> normals;
-    GLEngine::computeNormal(vertices, indices, normals);
-
-    // Setup vertex buffers and attributes
-    unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, (vertices.size() + normals.size()) * sizeof(glm::vec3), nullptr, GL_STATIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(glm::vec3), &vertices[0]);
-    glBufferSubData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), normals.size() * sizeof(glm::vec3), &normals[0]);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(vertices.size() * sizeof(glm::vec3)));
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
-    glBindVertexArray(0); 
+    // ImGui variables
+    static float lightPos[3] = {3.0f, 1.0f, 3.0f};
+    static float objectColor[3] = {0.8f, 0.8f, 0.8f};
+    static float lightColor[3] = {1.0f, 1.0f, 1.0f};
+    static float shininess = 255.0f;
+    static float ambientStrength = 0.1f;
+    static float specularStrength = 0.5f;
+    static bool usePhongLighting = true;
+    static float backgroundColor[3] = {0.2f, 0.3f, 0.3f};
+    static bool showWireframe = false;
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
@@ -138,7 +126,7 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.use();
@@ -153,19 +141,88 @@ int main() {
             (float)SCR_WIDTH / (float)SCR_HEIGHT, NEAR_PLANE, FAR_PLANE);
         shader.setMat4("projection", projection);
 
-        glm::vec3 lightPos(3.0f, 1.0f, 3.0f);
-        shader.setVec3("lightPos", lightPos);
+        shader.setVec3("lightPos", glm::vec3(lightPos[0], lightPos[1], lightPos[2]));
         shader.setVec3("viewPos", orbitalCamera.getPosition());
-        shader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-        shader.setVec3("objectColor", glm::vec3(0.8f, 0.8f, 0.8f));
-        shader.setFloat("shininess", 255.0f);
+        shader.setVec3("lightColor", glm::vec3(lightColor[0], lightColor[1], lightColor[2]));
+        shader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
+        shader.setFloat("shininess", shininess);
 
-        glBindVertexArray(VAO);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(currentMesh.VAO);
+        
+        if (usePhongLighting) {
+            shader.use();
+            shader.setVec3("lightPos", glm::vec3(lightPos[0], lightPos[1], lightPos[2]));
+            shader.setVec3("viewPos", orbitalCamera.getPosition());
+            shader.setVec3("lightColor", glm::vec3(lightColor[0], lightColor[1], lightColor[2]));
+            shader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
+            shader.setFloat("shininess", shininess);
+            shader.setFloat("ambientStrength", ambientStrength);
+            shader.setFloat("specularStrength", specularStrength);
+        } else {
+            shader.use();
+            shader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
+            shader.setVec3("lightColor", glm::vec3(1.0f));
+            shader.setFloat("ambientStrength", 1.0f);
+            shader.setFloat("specularStrength", 0.0f);
+        }
 
-        ImGui::SetNextWindowPos(ImVec2(0, 0));
-        ImGui::ShowDemoWindow();
+        // Dessiner le modèle
+        glPolygonMode(GL_FRONT_AND_BACK, showWireframe ? GL_LINE : GL_FILL);
+        glDrawElements(GL_TRIANGLES, currentMesh.indexCount, GL_UNSIGNED_INT, 0);
+
+        // Get current window size
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        
+        // Configure ImGui window with current size
+        ImGui::SetNextWindowPos(ImVec2(width * 0.8f, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(width * 0.2f, height), ImGuiCond_Always);
+        
+        // Start the window with flags to make it fixed
+        ImGui::Begin("Rendering Parameters", nullptr, 
+            ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoBringToFrontOnFocus
+        );
+
+        // Camera position
+        glm::vec3 camPos = orbitalCamera.getPosition();
+        ImGui::Text("Camera: (%.2f, %.2f, %.2f)", camPos.x, camPos.y, camPos.z);
+        ImGui::ColorEdit3("Background Color", backgroundColor);
+        ImGui::Separator();
+        
+        if (ImGui::CollapsingHeader("Light")) {
+            ImGui::Checkbox("Phong Lighting", &usePhongLighting);
+            ImGui::DragFloat3("Light Position", lightPos, 0.1f);
+            ImGui::ColorEdit3("Light Color", lightColor);
+            ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
+            ImGui::SliderFloat("Specular Strength", &specularStrength, 0.0f, 1.0f);
+        }
+
+        if (ImGui::CollapsingHeader("Object")) {
+            if (ImGui::Combo("3D Model", &currentItem, 
+                [](void* data, int idx, const char** out_text) {
+                    std::vector<std::string>* files = (std::vector<std::string>*)data;
+                    if (idx < 0 || (size_t)idx >= files->size()) return false;
+                    *out_text = (*files)[idx].c_str();
+                    return true;
+                }, 
+                &objFiles, objFiles.size())) 
+            {
+                std::string newObjPath = objectsDir + objFiles[currentItem];
+                if (newObjPath != currentObjPath) {
+                    cleanupMesh(currentMesh);
+                    currentMesh = GLEngine::loadMesh(newObjPath);
+                    currentObjPath = newObjPath;
+                }
+            }
+            ImGui::Checkbox("Show Wireframe", &showWireframe);
+            ImGui::ColorEdit3("Object Color", objectColor);
+            ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
+        }
+
+        ImGui::End();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -174,9 +231,7 @@ int main() {
     }
 
     // Cleanup
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    GLEngine::cleanupMesh(currentMesh);
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -205,35 +260,37 @@ void onMouseButton(GLFWwindow* window, int button, int action, int mods) {
 }
 
 void onMouseMove(GLFWwindow* window, double xpos, double ypos) {
-    if (mouseButtonState == MousePressedButton::NONE) {
-        lastX = (float)xpos;
-        lastY = (float)ypos;
-    } else {
-        if (firstMouse) {
-            lastX = xpos;
-            lastY = ypos;
-            firstMouse = false;
-        }
+    if (!ImGui::GetIO().WantCaptureMouse) {
+        if (mouseButtonState == MousePressedButton::NONE) {
+            lastX = (float)xpos;
+            lastY = (float)ypos;
+        } else {
+            if (firstMouse) {
+                lastX = xpos;
+                lastY = ypos;
+                firstMouse = false;
+            }
 
-        float xoffset = (float)xpos - lastX;
-        float yoffset = lastY - (float)ypos;
+            float xoffset = (float)xpos - lastX;
+            float yoffset = lastY - (float)ypos;
 
-        lastX = (float)xpos;
-        lastY = (float)ypos;
+            lastX = (float)xpos;
+            lastY = (float)ypos;
 
-        switch (mouseButtonState) {
-            case MousePressedButton::LEFT: 
-                orbitalCamera.orbit(xoffset, yoffset);
-                break;
-            case MousePressedButton::RIGHT:
-                orbitalCamera.track(xoffset);
-                orbitalCamera.pedestal(yoffset);
-                break;
-            case MousePressedButton::MIDDLE: 
-                orbitalCamera.dolly(yoffset);
-                break;
-            case MousePressedButton::NONE:
-                break;
+            switch (mouseButtonState) {
+                case MousePressedButton::LEFT: 
+                    orbitalCamera.orbit(xoffset, yoffset);
+                    break;
+                case MousePressedButton::RIGHT:
+                    orbitalCamera.track(xoffset);
+                    orbitalCamera.pedestal(yoffset);
+                    break;
+                case MousePressedButton::MIDDLE: 
+                    orbitalCamera.dolly(yoffset);
+                    break;
+                case MousePressedButton::NONE:
+                    break;
+            }
         }
     }
 }

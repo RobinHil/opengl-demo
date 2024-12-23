@@ -17,6 +17,7 @@ set(SRC
   ${SRC_DIR}/glengine.cpp
   ${SRC_DIR}/shader.cpp
   ${SRC_DIR}/utils.cpp
+  ${SRC_DIR}/mesh.cpp
 )
 
 set(HEADER
@@ -26,6 +27,7 @@ set(HEADER
   ${INC_DIR}/${PROJECT_NAME}/glengine.hpp
   ${INC_DIR}/${PROJECT_NAME}/shader.hpp
   ${INC_DIR}/${PROJECT_NAME}/utils.hpp
+  ${INC_DIR}/${PROJECT_NAME}/mesh.hpp
 )
 
 add_library(${PROJECT_NAME} ${SRC} ${HEADER})
