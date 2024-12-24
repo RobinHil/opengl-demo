@@ -29,8 +29,9 @@ float lastY;
 enum class MousePressedButton { NONE, LEFT, RIGHT, MIDDLE };
 enum class LightingMode {
     NONE,
-    PHONG
-    // Add other lighting modes here later
+    PHONG,
+    BLINN_PHONG,
+    GAUSSIAN
 };
 
 MousePressedButton mouseButtonState = MousePressedButton::NONE;
@@ -105,9 +106,17 @@ int main() {
     std::string basicFragPath = std::string(_resources_directory).append("shader/basic/basic.frag");
     GLEngine::Shader basicShader(basicVertPath.c_str(), basicFragPath.c_str());
 
-    std::string vertexPath = std::string(_resources_directory).append("shader/phong/phong.vert");
-    std::string fragmentPath = std::string(_resources_directory).append("shader/phong/phong.frag");
-    GLEngine::Shader phongShader(vertexPath.c_str(), fragmentPath.c_str());
+    std::string phongVertPath = std::string(_resources_directory).append("shader/phong/phong.vert");
+    std::string phongFragPath = std::string(_resources_directory).append("shader/phong/phong.frag");
+    GLEngine::Shader phongShader(phongVertPath.c_str(), phongFragPath.c_str());
+
+    std::string blinnPhongVertPath = std::string(_resources_directory).append("shader/blinn-phong/blinn-phong.vert");
+    std::string blinnPhongFragPath = std::string(_resources_directory).append("shader/blinn-phong/blinn-phong.frag");
+    GLEngine::Shader blinnPhongShader(blinnPhongVertPath.c_str(), blinnPhongFragPath.c_str());
+
+    std::string gaussianVertPath = std::string(_resources_directory).append("shader/gaussian/gaussian.vert");
+    std::string gaussianFragPath = std::string(_resources_directory).append("shader/gaussian/gaussian.frag");
+    GLEngine::Shader gaussianShader(gaussianVertPath.c_str(), gaussianFragPath.c_str());
 
     std::string gridVertPath = std::string(_resources_directory).append("shader/grid/grid.vert");
     std::string gridFragPath = std::string(_resources_directory).append("shader/grid/grid.frag");
@@ -137,7 +146,7 @@ int main() {
     static float lightPos[3] = {3.0f, 1.0f, 3.0f};
     static float objectColor[3] = {0.8f, 0.8f, 0.8f};
     static float lightColor[3] = {1.0f, 1.0f, 1.0f};
-    static float shininess = 255.0f;
+    static float shininess = 256.0f;
     static float ambientStrength = 0.1f;
     static float specularStrength = 0.5f;
     static float backgroundColor[3] = {0.2f, 0.3f, 0.3f};
@@ -181,6 +190,12 @@ int main() {
             case LightingMode::PHONG:
                 objectShader = phongShader;
                 break;
+            case LightingMode::BLINN_PHONG:
+                objectShader = blinnPhongShader;
+                break;
+            case LightingMode::GAUSSIAN:
+                objectShader = gaussianShader;
+                break;
         }
 
         // Configure active shader
@@ -203,6 +218,26 @@ int main() {
                 phongShader.setFloat("shininess", shininess);
                 phongShader.setFloat("ambientStrength", ambientStrength);
                 phongShader.setFloat("specularStrength", specularStrength);
+                break;
+
+            case LightingMode::BLINN_PHONG:
+                blinnPhongShader.setVec3("lightPos", glm::vec3(lightPos[0], lightPos[1], lightPos[2]));
+                blinnPhongShader.setVec3("viewPos", orbitalCamera.getPosition());
+                blinnPhongShader.setVec3("lightColor", glm::vec3(lightColor[0], lightColor[1], lightColor[2]));
+                blinnPhongShader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
+                blinnPhongShader.setFloat("shininess", shininess);
+                blinnPhongShader.setFloat("ambientStrength", ambientStrength);
+                blinnPhongShader.setFloat("specularStrength", specularStrength);
+                break;
+
+            case LightingMode::GAUSSIAN:
+                gaussianShader.setVec3("lightPos", glm::vec3(lightPos[0], lightPos[1], lightPos[2]));
+                gaussianShader.setVec3("viewPos", orbitalCamera.getPosition());
+                gaussianShader.setVec3("lightColor", glm::vec3(lightColor[0], lightColor[1], lightColor[2]));
+                gaussianShader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
+                gaussianShader.setFloat("shininess", shininess);
+                gaussianShader.setFloat("ambientStrength", ambientStrength);
+                gaussianShader.setFloat("specularStrength", specularStrength);
                 break;
         }
 
@@ -242,18 +277,26 @@ int main() {
         ImGui::Checkbox("Show Grid", &showGrid);
         
         if (ImGui::CollapsingHeader("Light")) {
-            const char* lighting_modes[] = { "None", "Phong" };
+            const char* lighting_modes[] = { "None", "Phong", "Blinn-Phong", "Gaussian" };
             int current_mode = static_cast<int>(currentLightingMode);
             if (ImGui::Combo("Lighting Mode", &current_mode, lighting_modes, IM_ARRAYSIZE(lighting_modes))) {
                 currentLightingMode = static_cast<LightingMode>(current_mode);
             }
 
-            if (currentLightingMode == LightingMode::PHONG) {
+            if (
+                currentLightingMode == LightingMode::PHONG ||
+                currentLightingMode == LightingMode::BLINN_PHONG ||
+                currentLightingMode == LightingMode::GAUSSIAN
+            ) {
                 ImGui::DragFloat3("Light Position", lightPos, 0.1f);
                 ImGui::ColorEdit3("Light Color", lightColor);
                 ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
                 ImGui::SliderFloat("Specular Strength", &specularStrength, 0.0f, 1.0f);
-                ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
+                if (currentLightingMode == LightingMode::GAUSSIAN) {
+                    ImGui::SliderFloat("Shininess", &shininess, 0.1f, 10.0f);
+                } else {
+                    ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
+                }
             }
         }
 
