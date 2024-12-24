@@ -51,34 +51,19 @@ namespace GLEngine {
         // X-axis (Red)
         vertices.insert(vertices.end(), {
             0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-            size, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-            // Arrow head
-            size, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-            size - 0.05f, 0.02f, 0.0f, 1.0f, 0.0f, 0.0f,
-            size, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-            size - 0.05f, -0.02f, 0.0f, 1.0f, 0.0f, 0.0f
+            size, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f
         });
 
         // Y-axis (Green)
         vertices.insert(vertices.end(), {
             0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, size, 0.0f, 0.0f, 1.0f, 0.0f,
-            // Arrow head
-            0.0f, size, 0.0f, 0.0f, 1.0f, 0.0f,
-            0.02f, size - 0.05f, 0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, size, 0.0f, 0.0f, 1.0f, 0.0f,
-            -0.02f, size - 0.05f, 0.0f, 0.0f, 1.0f, 0.0f
+            0.0f, size, 0.0f, 0.0f, 1.0f, 0.0f
         });
 
         // Z-axis (Blue)
         vertices.insert(vertices.end(), {
             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, size, 0.0f, 0.0f, 1.0f,
-            // Arrow head
-            0.0f, 0.0f, size, 0.0f, 0.0f, 1.0f,
-            0.02f, 0.0f, size - 0.05f, 0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, size, 0.0f, 0.0f, 1.0f,
-            -0.02f, 0.0f, size - 0.05f, 0.0f, 0.0f, 1.0f
+            0.0f, 0.0f, size, 0.0f, 0.0f, 1.0f
         });
 
         axesVertexCount = (vertices.size() / 6) - gridVertexCount;
