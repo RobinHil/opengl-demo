@@ -19,6 +19,7 @@ set(SRC
   ${SRC_DIR}/utils.cpp
   ${SRC_DIR}/mesh.cpp
   ${SRC_DIR}/grid3D.cpp
+  ${SRC_DIR}/sphere.cpp
 )
 
 set(HEADER
@@ -30,6 +31,7 @@ set(HEADER
   ${INC_DIR}/${PROJECT_NAME}/utils.hpp
   ${INC_DIR}/${PROJECT_NAME}/mesh.hpp
   ${INC_DIR}/${PROJECT_NAME}/grid3D.hpp
+  ${INC_DIR}/${PROJECT_NAME}/sphere.hpp
 )
 
 add_library(${PROJECT_NAME} ${SRC} ${HEADER})

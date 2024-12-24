@@ -16,11 +16,12 @@
 #include <glengine/utils.hpp>
 #include <glengine/mesh.hpp>
 #include <glengine/grid3D.hpp>
+#include <glengine/sphere.hpp>
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 const float NEAR_PLANE = 0.1f;
-const float FAR_PLANE = 10.0f;
+const float FAR_PLANE = 100.0f;
 
 bool firstMouse = true;
 float lastX;
@@ -127,6 +128,10 @@ int main() {
     std::string normalFragPath = std::string(_resources_directory).append("shader/normal/normal.frag");
     GLEngine::Shader normalShader(normalVertPath.c_str(), normalGeomPath.c_str(), normalFragPath.c_str());
 
+    std::string lightVertPath = std::string(_resources_directory).append("shader/light/light.vert");
+    std::string lightFragPath = std::string(_resources_directory).append("shader/light/light.frag");
+    GLEngine::Shader lightShader(lightVertPath.c_str(), lightFragPath.c_str());
+
     // Load 3D model
     std::string objectsDir = std::string(_resources_directory).append("object/");
     std::vector<std::string> objFiles = GLEngine::Mesh::getObjFiles(objectsDir);
@@ -138,6 +143,9 @@ int main() {
 
     // Initialize grid
     GLEngine::Grid3D grid(1.0f, 0.2f);
+
+    // Initialize light sphere
+    GLEngine::Sphere lightSphere(0.1f);
 
     // Initialize object shader
     GLEngine::Shader objectShader = basicShader;
@@ -245,6 +253,18 @@ int main() {
         glPolygonMode(GL_FRONT_AND_BACK, showWireframe ? GL_LINE : GL_FILL);
         currentMesh.draw();
 
+        // Draw light source
+        if (currentLightingMode != LightingMode::NONE) {
+            lightShader.use();
+            glm::mat4 lightModel = glm::mat4(1.0f);
+            lightModel = glm::translate(lightModel, glm::vec3(lightPos[0], lightPos[1], lightPos[2]));
+            lightShader.setMat4("model", lightModel);
+            lightShader.setMat4("view", view);
+            lightShader.setMat4("projection", projection);
+            lightShader.setVec3("lightColor", glm::vec3(lightColor[0], lightColor[1], lightColor[2]));
+            lightSphere.draw();
+        }
+
         if (showNormals) {
             normalShader.use();
             normalShader.setMat4("model", model);
@@ -292,11 +312,7 @@ int main() {
                 ImGui::ColorEdit3("Light Color", lightColor);
                 ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
                 ImGui::SliderFloat("Specular Strength", &specularStrength, 0.0f, 1.0f);
-                if (currentLightingMode == LightingMode::GAUSSIAN) {
-                    ImGui::SliderFloat("Shininess", &shininess, 0.1f, 10.0f);
-                } else {
-                    ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
-                }
+                ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
             }
         }
 
@@ -332,6 +348,7 @@ int main() {
     // Cleanup
     currentMesh.cleanup();
     grid.cleanup();
+    lightSphere.cleanup();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
