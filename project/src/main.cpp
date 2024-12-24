@@ -27,6 +27,12 @@ float lastX;
 float lastY;
 
 enum class MousePressedButton { NONE, LEFT, RIGHT, MIDDLE };
+enum class LightingMode {
+    NONE,
+    PHONG
+    // Add other lighting modes here later
+};
+
 MousePressedButton mouseButtonState = MousePressedButton::NONE;
 
 GLEngine::OrbitalCamera orbitalCamera(glm::vec3(0.3f, 0.4f, 3.0f), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
@@ -95,9 +101,13 @@ int main() {
     ImGui_ImplOpenGL3_Init();
 
     // Load and compile shaders
-    std::string vertexPath = std::string(_resources_directory).append("shader/light/phong/phong.vert");
-    std::string fragmentPath = std::string(_resources_directory).append("shader/light/phong/phong.frag");
-    GLEngine::Shader shader(vertexPath.c_str(), fragmentPath.c_str());
+    std::string basicVertPath = std::string(_resources_directory).append("shader/basic/basic.vert");
+    std::string basicFragPath = std::string(_resources_directory).append("shader/basic/basic.frag");
+    GLEngine::Shader basicShader(basicVertPath.c_str(), basicFragPath.c_str());
+
+    std::string vertexPath = std::string(_resources_directory).append("shader/phong/phong.vert");
+    std::string fragmentPath = std::string(_resources_directory).append("shader/phong/phong.frag");
+    GLEngine::Shader phongShader(vertexPath.c_str(), fragmentPath.c_str());
 
     std::string gridVertPath = std::string(_resources_directory).append("shader/grid/grid.vert");
     std::string gridFragPath = std::string(_resources_directory).append("shader/grid/grid.frag");
@@ -120,6 +130,9 @@ int main() {
     // Initialize grid
     GLEngine::Grid3D grid(1.0f, 0.2f);
 
+    // Initialize object shader
+    GLEngine::Shader objectShader = basicShader;
+
     // ImGui variables
     static float lightPos[3] = {3.0f, 1.0f, 3.0f};
     static float objectColor[3] = {0.8f, 0.8f, 0.8f};
@@ -127,12 +140,12 @@ int main() {
     static float shininess = 255.0f;
     static float ambientStrength = 0.1f;
     static float specularStrength = 0.5f;
-    static bool usePhongLighting = true;
     static float backgroundColor[3] = {0.2f, 0.3f, 0.3f};
     static bool showWireframe = false;
     static bool showGrid = true;
     static bool showNormals = false;
     static float normalLength = 0.1f;
+    static LightingMode currentLightingMode = LightingMode::PHONG;
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
@@ -145,24 +158,13 @@ int main() {
         glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader.use();
-
+        // Prepare common matrices
         glm::mat4 model = glm::mat4(1.0f);
-        shader.setMat4("model", model);
-
         glm::mat4 view = orbitalCamera.getViewMatrix();
-        shader.setMat4("view", view);
-
         glm::mat4 projection = glm::perspective(orbitalCamera.getFov(), 
             (float)SCR_WIDTH / (float)SCR_HEIGHT, NEAR_PLANE, FAR_PLANE);
-        shader.setMat4("projection", projection);
 
-        shader.setVec3("lightPos", glm::vec3(lightPos[0], lightPos[1], lightPos[2]));
-        shader.setVec3("viewPos", orbitalCamera.getPosition());
-        shader.setVec3("lightColor", glm::vec3(lightColor[0], lightColor[1], lightColor[2]));
-        shader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
-        shader.setFloat("shininess", shininess);
-
+        // Draw grid if enabled
         if (showGrid) {
             gridShader.use();
             gridShader.setMat4("view", view);
@@ -171,24 +173,40 @@ int main() {
             grid.draw(view, projection);
         }
         
-        if (usePhongLighting) {
-            shader.use();
-            shader.setVec3("lightPos", glm::vec3(lightPos[0], lightPos[1], lightPos[2]));
-            shader.setVec3("viewPos", orbitalCamera.getPosition());
-            shader.setVec3("lightColor", glm::vec3(lightColor[0], lightColor[1], lightColor[2]));
-            shader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
-            shader.setFloat("shininess", shininess);
-            shader.setFloat("ambientStrength", ambientStrength);
-            shader.setFloat("specularStrength", specularStrength);
-        } else {
-            shader.use();
-            shader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
-            shader.setVec3("lightColor", glm::vec3(1.0f));
-            shader.setFloat("ambientStrength", 1.0f);
-            shader.setFloat("specularStrength", 0.0f);
+        // Select and configure appropriate shader based on lighting mode
+        switch (currentLightingMode) {
+            case LightingMode::NONE:
+                objectShader = basicShader;
+                break;
+            case LightingMode::PHONG:
+                objectShader = phongShader;
+                break;
         }
 
-        // Dessiner le modèle
+        // Configure active shader
+        objectShader.use();
+        objectShader.setMat4("model", model);
+        objectShader.setMat4("view", view);
+        objectShader.setMat4("projection", projection);
+
+        // Set shader-specific uniforms
+        switch (currentLightingMode) {
+            case LightingMode::NONE:
+                basicShader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
+                break;
+
+            case LightingMode::PHONG:
+                phongShader.setVec3("lightPos", glm::vec3(lightPos[0], lightPos[1], lightPos[2]));
+                phongShader.setVec3("viewPos", orbitalCamera.getPosition());
+                phongShader.setVec3("lightColor", glm::vec3(lightColor[0], lightColor[1], lightColor[2]));
+                phongShader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
+                phongShader.setFloat("shininess", shininess);
+                phongShader.setFloat("ambientStrength", ambientStrength);
+                phongShader.setFloat("specularStrength", specularStrength);
+                break;
+        }
+
+        // Draw the model
         glPolygonMode(GL_FRONT_AND_BACK, showWireframe ? GL_LINE : GL_FILL);
         currentMesh.draw();
 
@@ -205,11 +223,10 @@ int main() {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         
-        // Configure ImGui window with current size
+        // Configure ImGui window
         ImGui::SetNextWindowPos(ImVec2(width * 0.75f, 0), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(width * 0.25f, height), ImGuiCond_Always);
         
-        // Start the window with flags to make it fixed
         ImGui::Begin("Rendering Parameters", nullptr, 
             ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoResize |
@@ -225,11 +242,19 @@ int main() {
         ImGui::Checkbox("Show Grid", &showGrid);
         
         if (ImGui::CollapsingHeader("Light")) {
-            ImGui::Checkbox("Phong Lighting", &usePhongLighting);
-            ImGui::DragFloat3("Light Position", lightPos, 0.1f);
-            ImGui::ColorEdit3("Light Color", lightColor);
-            ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
-            ImGui::SliderFloat("Specular Strength", &specularStrength, 0.0f, 1.0f);
+            const char* lighting_modes[] = { "None", "Phong" };
+            int current_mode = static_cast<int>(currentLightingMode);
+            if (ImGui::Combo("Lighting Mode", &current_mode, lighting_modes, IM_ARRAYSIZE(lighting_modes))) {
+                currentLightingMode = static_cast<LightingMode>(current_mode);
+            }
+
+            if (currentLightingMode == LightingMode::PHONG) {
+                ImGui::DragFloat3("Light Position", lightPos, 0.1f);
+                ImGui::ColorEdit3("Light Color", lightColor);
+                ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0.0f, 1.0f);
+                ImGui::SliderFloat("Specular Strength", &specularStrength, 0.0f, 1.0f);
+                ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
+            }
         }
 
         if (ImGui::CollapsingHeader("Object")) {
@@ -250,7 +275,6 @@ int main() {
             }
             ImGui::Checkbox("Show Wireframe", &showWireframe);
             ImGui::ColorEdit3("Object Color", objectColor);
-            ImGui::SliderFloat("Shininess", &shininess, 1.0f, 256.0f);
             ImGui::Checkbox("Show Normals", &showNormals);
         }
 
