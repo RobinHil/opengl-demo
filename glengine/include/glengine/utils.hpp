@@ -6,12 +6,14 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
+#include "mesh.hpp"
 
 namespace GLEngine {
     std::string readFile(const char* filePath);
     
-    void loadObjFile(const char* filePath, std::vector<glm::vec3>& vertices, std::vector<unsigned int>& indices);
-    void computeNormal(const std::vector<glm::vec3>& vertices, const std::vector<unsigned int>& indices, std::vector<glm::vec3>& normal);
+    void loadObjFile(const char* filePath, std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, bool& hasTexCoords);
+                     
+    void computeNormals(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
     
     void framebufferSizeCallback(GLFWwindow* window, int width, int height);
     void processInput(GLFWwindow* window);

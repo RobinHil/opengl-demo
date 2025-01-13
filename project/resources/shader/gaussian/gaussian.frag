@@ -23,14 +23,11 @@ void main()
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
     
-    // Specular - Version simplifiée de Gaussian
+    // Specular
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float NdotH = max(dot(norm, halfwayDir), 0.0);
-    
-    // Distribution gaussienne
     float spec = exp(-shininess * (1.0 - NdotH));
-    
     vec3 specular = specularStrength * spec * lightColor;
     
     vec3 result = (ambient + diffuse + specular) * objectColor;

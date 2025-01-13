@@ -72,10 +72,8 @@ namespace GLEngine {
     void Grid3D::draw(const glm::mat4& view, const glm::mat4& projection) {
         glBindVertexArray(VAO);
         
-        // Draw grid
         glDrawArrays(GL_LINES, 0, gridVertexCount);
         
-        // Draw axes
         glLineWidth(3.0f);
         glDrawArrays(GL_LINES, gridVertexCount, axesVertexCount);
         glLineWidth(1.0f);

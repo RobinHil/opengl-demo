@@ -20,8 +20,8 @@
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
-const float NEAR_PLANE = 0.1f;
-const float FAR_PLANE = 100.0f;
+const float NEAR_PLANE = 1.0f;
+const float FAR_PLANE = 1000.0f;
 
 bool firstMouse = true;
 float lastX;
@@ -132,7 +132,6 @@ int main() {
     std::string lightFragPath = std::string(_resources_directory).append("shader/light/light.frag");
     GLEngine::Shader lightShader(lightVertPath.c_str(), lightFragPath.c_str());
 
-    // Load 3D model
     std::string objectsDir = std::string(_resources_directory).append("object/");
     std::vector<std::string> objFiles = GLEngine::Mesh::getObjFiles(objectsDir);
     
@@ -141,16 +140,10 @@ int main() {
     GLEngine::Mesh currentMesh;
     currentMesh.loadFromFile(currentObjPath);
 
-    // Initialize grid
     GLEngine::Grid3D grid(1.0f, 0.2f);
-
-    // Initialize light sphere
     GLEngine::Cube lightCube(0.1f);
-
-    // Initialize object shader
     GLEngine::Shader objectShader = basicShader;
 
-    // ImGui variables
     static float lightPos[3] = {3.0f, 1.0f, 3.0f};
     static float objectColor[3] = {0.8f, 0.8f, 0.8f};
     static float lightColor[3] = {1.0f, 1.0f, 1.0f};
@@ -164,9 +157,10 @@ int main() {
     static float normalLength = 0.1f;
     static LightingMode currentLightingMode = LightingMode::PHONG;
 
-    // Render loop
     while (!glfwWindowShouldClose(window)) {
         GLEngine::processInput(window);
+
+        std::vector<std::string> objFiles = GLEngine::Mesh::getObjFiles(objectsDir);
         
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -175,7 +169,6 @@ int main() {
         glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Prepare common matrices
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = orbitalCamera.getViewMatrix();
         glm::mat4 projection = glm::perspective(orbitalCamera.getFov(), 
@@ -190,7 +183,6 @@ int main() {
             grid.draw(view, projection);
         }
         
-        // Select and configure appropriate shader based on lighting mode
         switch (currentLightingMode) {
             case LightingMode::NONE:
                 objectShader = basicShader;
@@ -206,13 +198,11 @@ int main() {
                 break;
         }
 
-        // Configure active shader
         objectShader.use();
         objectShader.setMat4("model", model);
         objectShader.setMat4("view", view);
         objectShader.setMat4("projection", projection);
 
-        // Set shader-specific uniforms
         switch (currentLightingMode) {
             case LightingMode::NONE:
                 basicShader.setVec3("objectColor", glm::vec3(objectColor[0], objectColor[1], objectColor[2]));
@@ -249,11 +239,9 @@ int main() {
                 break;
         }
 
-        // Draw the model
         glPolygonMode(GL_FRONT_AND_BACK, showWireframe ? GL_LINE : GL_FILL);
         currentMesh.draw();
 
-        // Draw light source
         if (currentLightingMode != LightingMode::NONE) {
             lightShader.use();
             glm::mat4 lightModel = glm::mat4(1.0f);
@@ -274,11 +262,10 @@ int main() {
             currentMesh.draw();
         }
 
-        // Get current window size
         int width, height;
         glfwGetWindowSize(window, &width, &height);
         
-        // Configure ImGui window
+        // ImGui
         ImGui::SetNextWindowPos(ImVec2(width * 0.75f, 0), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(width * 0.25f, height), ImGuiCond_Always);
         
@@ -345,7 +332,6 @@ int main() {
         glfwPollEvents();
     }
 
-    // Cleanup
     currentMesh.cleanup();
     grid.cleanup();
     lightCube.cleanup();

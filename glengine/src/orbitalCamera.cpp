@@ -72,13 +72,14 @@ namespace GLEngine {
 	}
 
 	void OrbitalCamera::zoom(float offset) {
-		fov -= (float)offset;
-
-		if (fov < 1.0f)
-			fov = 1.0f;
-
-		if (fov > 45.0f)
-			fov = 45.0f;
+		glm::vec3 direction = glm::normalize(focus - position);
+        float distance = glm::length(focus - position);
+        
+        float zoomSpeed = distance * 0.1f;
+        
+        position -= direction * offset * zoomSpeed;
+        
+        updateCameraVectors();
 	}
 
 	void OrbitalCamera::updateCameraVectors() {
