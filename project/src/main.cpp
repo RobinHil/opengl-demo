@@ -16,7 +16,7 @@
 #include <glengine/utils.hpp>
 #include <glengine/mesh.hpp>
 #include <glengine/grid3D.hpp>
-#include <glengine/sphere.hpp>
+#include <glengine/cube.hpp>
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -145,7 +145,7 @@ int main() {
     GLEngine::Grid3D grid(1.0f, 0.2f);
 
     // Initialize light sphere
-    GLEngine::Sphere lightSphere(0.1f);
+    GLEngine::Cube lightCube(0.1f);
 
     // Initialize object shader
     GLEngine::Shader objectShader = basicShader;
@@ -262,7 +262,7 @@ int main() {
             lightShader.setMat4("view", view);
             lightShader.setMat4("projection", projection);
             lightShader.setVec3("lightColor", glm::vec3(lightColor[0], lightColor[1], lightColor[2]));
-            lightSphere.draw();
+            lightCube.draw();
         }
 
         if (showNormals) {
@@ -348,7 +348,7 @@ int main() {
     // Cleanup
     currentMesh.cleanup();
     grid.cleanup();
-    lightSphere.cleanup();
+    lightCube.cleanup();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
