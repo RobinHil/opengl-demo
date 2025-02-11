@@ -1,5 +1,3 @@
-*HILAIRE Robin*
-
 # 🎮 OpenGL Demo
 
 Ce projet est un démonstrateur OpenGL qui permet de charger visualiser des modèles 3D au format .obj avec différents modes d'éclairage et options de rendu.
